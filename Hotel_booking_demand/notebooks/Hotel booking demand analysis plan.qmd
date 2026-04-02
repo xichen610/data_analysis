@@ -1,0 +1,199 @@
+---
+title: "Hotel Booking demand analysis plan"
+format: md
+---
+# Project: Hotel Booking Demand Analysis
+
+## Goal:
+Understand booking patterns and identify drivers of cancellation.
+
+## North Star Question:
+What drives cancellation and how to improve it?
+
+## Key Metrics
+
+To guide the analysis, we focus on three main metrics:
+
+1. **adr (ADR - Average Daily Rate)**
+   - Average room price per booking.
+   
+2. **Cancellation Rate**
+   - Define: cancellation_rate = mean(is_canceled) or cancellation rate (by group) = SUM(is_canceled) / COUNT(total bookings in group)
+   - revenue_loss = adr * is_canceled
+
+3. **Booking Volume**
+   - Number of bookings across different dimensions (time, country, channel).
+   - Helps identify demand patterns.
+
+
+## Main Questions:
+
+### 1. How significant is the cancellation problem and its impact on revenue?
+    Task 1: Evaluate cancellation impact
+    1. Calculate overall cancellation_rate
+    2. Calculate total revenue_loss
+    3. Calculate cancellation_rate by hotel type
+    Output:
+    - Table of cancellation_rate
+    - Bar chart by hotel
+    Lock my notes and insight
+
+
+### 2. Which factors are associated with higher cancellation rates?(lead_time,deposit, market_segment, distribution_channel, and loyalty)
+    2.1 lead_time
+    Task 2: Test whether lead_time affects cancellation
+    - Bin lead_time into fixed intervals: [0-30, 31-90, 91-180, 181+]
+    - Calculate and bin as X axis：
+        1 cancellation_rate
+        2 cancel_share
+        3 revenue_loss_share
+    Output:
+    - Table
+    - Bar chart
+
+ extend EDA & hypotheses : lead_time x adr based on demand（hotel + month ≈ demand proxy）
+    Task: Extend EDA to analyze the relationship between lead_time and ADR under demand conditions.
+    
+    Context:
+    - Demand is approximated using hotel type and arrival_month.
+    - Goal is to distinguish between pricing effect and demand-driven effect.
+
+    Hypotheses:
+    H1: Under the same demand level (same month), lower ADR is associated with longer lead_time (pricing effect).
+    H2: Demand (proxied by month and hotel) jointly drives both ADR and lead_time.
+
+    Output 1: Boxplot (Primary)
+    - Chart type: boxplot
+    - X-axis: lead_time_group
+    - Y-axis: adr
+    - Facet (col): arrival_month
+    - Hue: hotel
+    - Purpose: Test H1 by examining ADR distribution across lead_time within each month
+
+---
+
+    Output 2: Heatmap (Structure view)
+    - Separate heatmaps for each hotel
+    - X-axis: arrival_month
+    - Y-axis: lead_time_group
+    - Value (color): mean ADR
+    - Purpose: Visualize pricing structure across time and lead_time
+
+---
+
+    Output 3: Line chart (Trend summary)
+    - X-axis: lead_time_group
+    - Y-axis: median ADR
+    - Hue: hotel
+    - Add: shaded area for variability (e.g. IQR or confidence interval)
+    - Purpose: Summarize overall pricing trend
+
+---
+
+Visualization rules:
+- City Hotel → blue palette
+- Resort Hotel → orange palette
+- Overall → green palette
+- Keep consistent color mapping across all charts
+
+---
+
+    Notes:
+    - Focus on interpretation of conditional relationships (within month)
+    - Avoid over-interpretation of small sample segments
+
+
+    2.2 deposit type
+    Task 3: Test whether deposit_type affects cancellation
+    - Group by deposit_type
+    - Calculate cancellation rate
+    Output:
+    - Bar chart
+
+    extend EDA & hypotheses: deposit_type within the same lead_time
+    output:
+    - heatmap
+
+
+    2.3 market_segment 
+    Task 4: Test whether market_segment affects cancellation
+    - Group by market_segment
+    - Calculate cancellation rate
+    - Sort descending
+    Output:
+    - Bar chart (sorted)
+
+    2.4 distribution_channel
+    Task 5: Test whether distribution_channel affects cancellation
+    - Group by distribution_channel
+    - Calculate cancellation_rate
+    Output:
+    - Bar chart
+
+    2.5 culture
+    Task 6: Analyze cancellation rate by region
+    - Sort descending the cancellation rate by country
+    - Identify top countries by booking volume (> 2%)
+    - Calculate cancellation rate for selected countries
+    - Compare differences
+    Output:
+    - Bar chart (sorted by booking volume)
+    - Bar chart (cancellation_rate by country)
+
+    2.6 loyalty
+    Task 7: Test whether loyalty affects cancellation
+    - Compare cancellation rate by:
+        - is_repeated_guest
+        - previous_cancellations
+    Output:
+    - Bar chart
+
+### 3. What factors most strongly predict cancellations?
+   Task 8: Compare driver strength
+   - For each driver, calculate: max(cancellation_rate) - min(cancellation_rate)
+   - Rank drivers by difference
+   Output:
+   - Table ranking drivers
+
+## Notebook structure:
+### Part One：
+    1. Introduction
+    2. Data Overview
+    3. Data Cleaning
+        Principle: Handle missing values based on business meaning rather than data type.
+        Steps:
+        1. Standardize missing values
+            - Convert pseudo-missing values (e.g. 'NULL') to NaN
+        2. Handle critical variables (target & key fields)
+            - Drop rows where `is_canceled` is missing (target variable)
+            - Drop rows where key identifiers are missing if necessary
+        3. Handle numeric variables based on meaning
+            - Count variables (e.g. children, babies): fill NaN with 0
+            - Continuous variables (e.g. adr): do NOT blindly fill with 0
+        4. Handle categorical variables
+            - Keep NaN if meaningful
+            - Or label as "Unknown" if needed for analysis
+        5. Remove duplicates
+            - Drop only exact duplicate rows
+        6. Feature engineering (for validation)
+            - Create:
+            total_guests = adults + children + babies
+            total_room_nights = stays_in_weekend_nights + stays_in_week_nights
+        7. Remove invalid rows (after feature creation)
+            - adr <= 0
+            - total_guests <= 0
+            - total_room_nights <= 0
+    4. Variable Categories
+        Category the variables by temporal, Customer, Booking Behavior, Channels, Revenue and Outcome
+    5. Main Questions and EDA
+    6. Key Insights
+    7. Validation
+    8. Conslution
+
+### Part Two：
+    9. ML verify the insights
+
+### Part Three:
+    10. Comparison between EDA insights and ML results
+
+---
